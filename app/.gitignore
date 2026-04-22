@@ -1,0 +1,20 @@
+# Built application files
+*.apk
+*.aab
+*.ap_
+
+# Build files
+/build
+*.iml
+.gradle
+
+# Local config (contains your PC's paths — should never be shared)
+local.properties
+
+# IDE files
+/.idea
+*.iml
+
+# Keystore files (keep these secret!)
+*.jks
+*.keystore

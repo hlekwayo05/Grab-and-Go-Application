@@ -23,6 +23,7 @@ import com.example.grabngo2.ui.theme.*
 
 @Composable
 fun ResetPasswordScreen(
+    themeChoice: String = "dark",
     onBackClick: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
@@ -30,7 +31,7 @@ fun ResetPasswordScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -49,7 +50,7 @@ fun ResetPasswordScreen(
                 Surface(
                     modifier = Modifier.size(80.dp),
                     shape = CircleShape,
-                    color = Color(0xFF3D2A1D)
+                    color = if (themeChoice == "dark") Color(0xFF3D2A1D) else LightIconBg
                 ) {
                     Box(contentAlignment = Alignment.Center) {
                         Icon(
@@ -64,7 +65,7 @@ fun ResetPasswordScreen(
 
             Text(
                 text = "Reset your",
-                color = TextWhite,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -76,7 +77,7 @@ fun ResetPasswordScreen(
             )
             Text(
                 text = "No stress! Enter your student email and we'll send you a reset link in seconds.",
-                color = TextGray,
+                color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -92,7 +93,7 @@ fun ResetPasswordScreen(
                 StepItem(number = "1", label = "Enter Email", isActive = true, isCompleted = true)
                 Box(modifier = Modifier.weight(1f).height(2.dp).background(PrimaryOrange))
                 StepItem(number = "2", label = "Check Inbox", isActive = true)
-                Box(modifier = Modifier.weight(1f).height(2.dp).background(CardBackground))
+                Box(modifier = Modifier.weight(1f).height(2.dp).background(MaterialTheme.colorScheme.surfaceVariant))
                 StepItem(number = "3", label = "New Pass", isActive = false)
             }
 
@@ -103,7 +104,8 @@ fun ResetPasswordScreen(
                 value = email,
                 onValueChange = { email = it },
                 placeholder = "you@university.ac.za",
-                icon = Icons.Default.Email
+                icon = Icons.Default.Email,
+                themeChoice = themeChoice
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -111,7 +113,7 @@ fun ResetPasswordScreen(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
-                color = CardBackground
+                color = MaterialTheme.colorScheme.surfaceVariant
             ) {
                 Row(
                     modifier = Modifier.padding(16.dp),
@@ -121,7 +123,7 @@ fun ResetPasswordScreen(
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "A reset link will be sent to your university email. Check your inbox and spam folder. Link expires in 15 minutes.",
-                        color = TextGray,
+                        color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                         fontSize = 12.sp
                     )
                 }
@@ -147,7 +149,7 @@ fun ResetPasswordScreen(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("← Back to ", color = TextGray, fontSize = 14.sp)
+                Text("← Back to ", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp)
                 Text(
                     "Log In",
                     color = PrimaryOrange,

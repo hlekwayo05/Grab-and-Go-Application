@@ -25,6 +25,7 @@ import com.example.grabngo2.ui.theme.*
 
 @Composable
 fun SignUpScreen(
+    themeChoice: String = "dark",
     onBackClick: () -> Unit,
     onLoginClick: () -> Unit,
     onSignUpSuccess: () -> Unit
@@ -39,7 +40,7 @@ fun SignUpScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -53,19 +54,19 @@ fun SignUpScreen(
                 onClick = onBackClick,
                 modifier = Modifier
                     .size(40.dp)
-                    .background(CardBackground, RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = TextWhite
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Surface(
-                color = Color(0xFF3D2A1D),
+                color = if (themeChoice == "dark") Color(0xFF3D2A1D) else LightIconBg,
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Row(
@@ -89,14 +90,14 @@ fun SignUpScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(CardBackground, RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
                     .padding(4.dp)
             ) {
                 TextButton(
                     onClick = onLoginClick,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Log In", color = TextGray)
+                    Text("Log In", color = if (themeChoice == "dark") TextGray else LightTextSecondary)
                 }
                 Button(
                     onClick = { },
@@ -112,7 +113,7 @@ fun SignUpScreen(
 
             Text(
                 text = "Create your",
-                color = TextWhite,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -124,7 +125,7 @@ fun SignUpScreen(
             )
             Text(
                 text = "Join thousands of students on campus",
-                color = TextGray,
+                color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -138,7 +139,8 @@ fun SignUpScreen(
                         value = firstName,
                         onValueChange = { firstName = it },
                         placeholder = "Thabo",
-                        icon = Icons.Default.Person
+                        icon = Icons.Default.Person,
+                        themeChoice = themeChoice
                     )
                 }
                 Spacer(modifier = Modifier.width(16.dp))
@@ -148,7 +150,8 @@ fun SignUpScreen(
                         value = lastName,
                         onValueChange = { lastName = it },
                         placeholder = "Mokoena",
-                        icon = Icons.Default.Person
+                        icon = Icons.Default.Person,
+                        themeChoice = themeChoice
                     )
                 }
             }
@@ -160,7 +163,8 @@ fun SignUpScreen(
                 value = studentNumber,
                 onValueChange = { studentNumber = it },
                 placeholder = "e.g. 12345678",
-                icon = Icons.Default.Style
+                icon = Icons.Default.Style,
+                themeChoice = themeChoice
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -170,7 +174,8 @@ fun SignUpScreen(
                 value = email,
                 onValueChange = { email = it },
                 placeholder = "you@university.ac.za",
-                icon = Icons.Default.Email
+                icon = Icons.Default.Email,
+                themeChoice = themeChoice
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -182,7 +187,8 @@ fun SignUpScreen(
                 placeholder = "Create a strong password",
                 icon = Icons.Default.Lock,
                 isPassword = true,
-                trailingIcon = Icons.Default.Visibility
+                trailingIcon = Icons.Default.Visibility,
+                themeChoice = themeChoice
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -193,13 +199,13 @@ fun SignUpScreen(
                     onCheckedChange = { agreed = it },
                     colors = CheckboxDefaults.colors(
                         checkedColor = PrimaryOrange,
-                        uncheckedColor = TextGray,
+                        uncheckedColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
                         checkmarkColor = TextWhite
                     )
                 )
                 Text(
                     text = "I agree to the Terms of Service and Privacy Policy of GrabNGo",
-                    color = TextGray,
+                    color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                     fontSize = 12.sp,
                     modifier = Modifier.clickable { agreed = !agreed }
                 )

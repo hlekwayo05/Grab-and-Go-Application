@@ -26,6 +26,7 @@ import com.example.grabngo2.ui.theme.*
 
 @Composable
 fun LoginScreen(
+    themeChoice: String = "dark",
     onBackClick: () -> Unit,
     onSignUpClick: () -> Unit,
     onLoginSuccess: () -> Unit,
@@ -37,7 +38,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         Column(
             modifier = Modifier
@@ -50,19 +51,19 @@ fun LoginScreen(
                 onClick = onBackClick,
                 modifier = Modifier
                     .size(40.dp)
-                    .background(CardBackground, RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
-                    tint = TextWhite
+                    tint = MaterialTheme.colorScheme.onBackground
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Surface(
-                color = Color(0xFF3D2A1D),
+                color = if (themeChoice == "dark") Color(0xFF3D2A1D) else LightIconBg,
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Row(
@@ -86,7 +87,7 @@ fun LoginScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(CardBackground, RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(16.dp))
                     .padding(4.dp)
             ) {
                 Button(
@@ -101,7 +102,7 @@ fun LoginScreen(
                     onClick = onSignUpClick,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Sign Up", color = TextGray)
+                    Text("Sign Up", color = if (themeChoice == "dark") TextGray else LightTextSecondary)
                 }
             }
 
@@ -109,7 +110,7 @@ fun LoginScreen(
 
             Text(
                 text = "Welcome",
-                color = TextWhite,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -121,7 +122,7 @@ fun LoginScreen(
             )
             Text(
                 text = "Log in to your student account",
-                color = TextGray,
+                color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -133,7 +134,8 @@ fun LoginScreen(
                 value = email,
                 onValueChange = { email = it },
                 placeholder = "you@university.ac.za",
-                icon = Icons.Default.Email
+                icon = Icons.Default.Email,
+                themeChoice = themeChoice
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -145,7 +147,8 @@ fun LoginScreen(
                 placeholder = "Enter your password",
                 icon = Icons.Default.Lock,
                 isPassword = true,
-                trailingIcon = Icons.Default.Visibility
+                trailingIcon = Icons.Default.Visibility,
+                themeChoice = themeChoice
             )
 
             AlignRightText(
@@ -164,9 +167,9 @@ fun LoginScreen(
             
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = CardBackground)
-                    Text("  OR  ", color = TextGray, fontSize = 12.sp)
-                    HorizontalDivider(modifier = Modifier.weight(1f), color = CardBackground)
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surfaceVariant)
+                    Text("  OR  ", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 12.sp)
+                    HorizontalDivider(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surfaceVariant)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -182,12 +185,13 @@ fun AuthTextField(
     placeholder: String,
     icon: androidx.compose.ui.graphics.vector.ImageVector,
     isPassword: Boolean = false,
-    trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null
+    trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    themeChoice: String = "dark"
 ) {
     Column {
         Text(
             text = label,
-            color = TextGray,
+            color = if (themeChoice == "dark") TextGray else LightTextSecondary,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             letterSpacing = 1.sp
@@ -197,20 +201,20 @@ fun AuthTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(placeholder, color = TextGray.copy(alpha = 0.5f)) },
-            leadingIcon = { Icon(icon, contentDescription = null, tint = TextGray) },
+            placeholder = { Text(placeholder, color = (if (themeChoice == "dark") TextGray else LightTextSecondary).copy(alpha = 0.5f)) },
+            leadingIcon = { Icon(icon, contentDescription = null, tint = if (themeChoice == "dark") TextGray else LightTextSecondary) },
             trailingIcon = trailingIcon?.let { 
-                { Icon(it, contentDescription = null, tint = TextGray) }
+                { Icon(it, contentDescription = null, tint = if (themeChoice == "dark") TextGray else LightTextSecondary) }
             },
             visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
             keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Email),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = PrimaryOrange,
-                unfocusedBorderColor = CardBackground,
-                focusedContainerColor = CardBackground,
-                unfocusedContainerColor = CardBackground,
-                focusedTextColor = TextWhite,
-                unfocusedTextColor = TextWhite
+                unfocusedBorderColor = Color.Transparent,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
             ),
             shape = RoundedCornerShape(16.dp)
         )

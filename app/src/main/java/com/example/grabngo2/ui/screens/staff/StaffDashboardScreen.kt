@@ -1,6 +1,7 @@
 package com.example.grabngo2.ui.screens.staff
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -8,7 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,16 +17,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.grabngo2.ui.theme.*
+import com.example.grabngo2.ui.screens.student.ThemeDialog
 
 @Composable
-fun StaffDashboardScreen() {
+fun StaffDashboardScreen(
+    themeChoice: String = "dark",
+    onThemeChange: (String) -> Unit = {}
+) {
+    var showThemeDialog by remember { mutableStateOf(false) }
+
+    if (showThemeDialog) {
+        ThemeDialog(
+            currentTheme = themeChoice,
+            onDismiss = { showThemeDialog = false },
+            onSelect = {
+                onThemeChange(it)
+                showThemeDialog = false
+            }
+        )
+    }
+
     Scaffold(
-        bottomBar = { StaffBottomBar() }
+        bottomBar = { StaffBottomBar(themeChoice = themeChoice) }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .padding(24.dp)
         ) {
@@ -35,31 +53,31 @@ fun StaffDashboardScreen() {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Surface(
-                    color = Color(0xFF3D2A1D),
+                    color = if (themeChoice == "dark") Color(0xFF3D2A1D) else LightIconBg,
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Settings, contentDescription = null, tint = Color(0xFFFFD700), modifier = Modifier.size(14.dp))
+                        Icon(Icons.Default.Settings, contentDescription = null, tint = PrimaryOrange, modifier = Modifier.size(14.dp))
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "Staff Dashboard",
-                            color = Color(0xFFFFD700),
+                            color = PrimaryOrange,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 }
                 IconButton(onClick = { }) {
-                    Icon(Icons.Default.MoreHoriz, contentDescription = null, tint = TextGray)
+                    Icon(Icons.Default.MoreHoriz, contentDescription = null, tint = if (themeChoice == "dark") TextGray else LightTextSecondary)
                 }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text("Orders Today", color = TextWhite, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Text("Orders Today", color = MaterialTheme.colorScheme.onBackground, fontSize = 28.sp, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -71,16 +89,63 @@ fun StaffDashboardScreen() {
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("Incoming Orders", color = TextWhite, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Incoming Orders", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            LazyColumn(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 items(listOf(
                     OrderData("#GNG-0042", "Thabo M.", "2 mins ago", "1x Curry & Rice · 1x Coke 500ml", "Preparing"),
                     OrderData("#GNG-0041", "Lerato K.", "5 mins ago", "2x Boerewors Roll · 1x Fanta", "Preparing")
                 )) { order ->
                     StaffOrderCard(order)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            Text("Appearance", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showThemeDialog = true },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            modifier = Modifier.size(40.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (themeChoice == "dark") Color(0xFF3D2A1D) else LightIconBg
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Palette,
+                                    contentDescription = null,
+                                    tint = PrimaryOrange,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text("Theme", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+                            val themeLabel = when(themeChoice) {
+                                "dark" -> "Dark Ember"
+                                "light" -> "Campus Light"
+                                else -> "System Default"
+                            }
+                            Text(themeLabel, color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 12.sp)
+                        }
+                    }
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = if (themeChoice == "dark") TextGray else LightTextSecondary)
                 }
             }
         }
@@ -94,7 +159,7 @@ fun StatCard(value: String, label: String, color: Color, modifier: Modifier = Mo
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -111,7 +176,7 @@ fun StaffOrderCard(order: OrderData) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
@@ -119,7 +184,7 @@ fun StaffOrderCard(order: OrderData) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(order.id, color = TextWhite, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(order.id, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 Surface(
                     color = PrimaryOrange.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(8.dp)
@@ -143,7 +208,7 @@ fun StaffOrderCard(order: OrderData) {
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-            Text(order.items, color = TextWhite, fontSize = 14.sp)
+            Text(order.items, color = MaterialTheme.colorScheme.onBackground, fontSize = 14.sp)
 
             Spacer(modifier = Modifier.height(20.dp))
 
@@ -170,9 +235,9 @@ fun StaffOrderCard(order: OrderData) {
 }
 
 @Composable
-fun StaffBottomBar() {
+fun StaffBottomBar(themeChoice: String = "dark") {
     NavigationBar(
-        containerColor = Color(0xFF1A110A),
+        containerColor = if (themeChoice == "dark") Color(0xFF1A110A) else LightSurface,
         tonalElevation = 8.dp
     ) {
         NavigationBarItem(
@@ -183,8 +248,8 @@ fun StaffBottomBar() {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = PrimaryOrange,
                 selectedTextColor = PrimaryOrange,
-                unselectedIconColor = TextGray,
-                unselectedTextColor = TextGray,
+                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 indicatorColor = Color.Transparent
             )
         )
@@ -196,8 +261,8 @@ fun StaffBottomBar() {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = PrimaryOrange,
                 selectedTextColor = PrimaryOrange,
-                unselectedIconColor = TextGray,
-                unselectedTextColor = TextGray,
+                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 indicatorColor = Color.Transparent
             )
         )
@@ -209,8 +274,8 @@ fun StaffBottomBar() {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = PrimaryOrange,
                 selectedTextColor = PrimaryOrange,
-                unselectedIconColor = TextGray,
-                unselectedTextColor = TextGray,
+                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 indicatorColor = Color.Transparent
             )
         )
@@ -222,8 +287,8 @@ fun StaffBottomBar() {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = PrimaryOrange,
                 selectedTextColor = PrimaryOrange,
-                unselectedIconColor = TextGray,
-                unselectedTextColor = TextGray,
+                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 indicatorColor = Color.Transparent
             )
         )

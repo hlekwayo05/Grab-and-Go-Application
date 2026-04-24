@@ -27,15 +27,31 @@ import com.example.grabngo2.ui.theme.*
 
 @Composable
 fun StudentHomeScreen(
+    themeChoice: String = "dark",
+    onThemeToggle: () -> Unit = {},
+    onThemeChange: (String) -> Unit = {},
     onOrderClick: () -> Unit
 ) {
+    var showThemeDialog by remember { mutableStateOf(false) }
+
+    if (showThemeDialog) {
+        ThemeDialog(
+            currentTheme = themeChoice,
+            onDismiss = { showThemeDialog = false },
+            onSelect = {
+                onThemeChange(it)
+                showThemeDialog = false
+            }
+        )
+    }
+
     Scaffold(
-        bottomBar = { StudentBottomBar(currentScreen = "home") }
+        bottomBar = { StudentBottomBar(currentScreen = "home", themeChoice = themeChoice) }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
@@ -46,17 +62,26 @@ fun StudentHomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Good afternoon 👋", color = TextGray, fontSize = 14.sp)
+                    Text("Good afternoon 👋", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp)
                     Text(
                         "What are you hungry for?",
-                        color = TextWhite,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
                         lineHeight = 34.sp
                     )
                 }
-                IconButton(onClick = { }) {
-                    Icon(Icons.Default.MoreHoriz, contentDescription = null, tint = TextGray)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onThemeToggle) {
+                        Icon(
+                            imageVector = if (themeChoice == "dark") Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = "Toggle Theme",
+                            tint = if (themeChoice == "dark") TextGray else LightTextSecondary
+                        )
+                    }
+                    IconButton(onClick = { }) {
+                        Icon(Icons.Default.MoreHoriz, contentDescription = null, tint = if (themeChoice == "dark") TextGray else LightTextSecondary)
+                    }
                 }
             }
 
@@ -115,19 +140,19 @@ fun StudentHomeScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("Categories", color = TextWhite, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Categories", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
             
             val categories = listOf("Meals", "Snacks", "Drinks", "Combos", "Desserts")
             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 items(categories) { category ->
-                    CategoryItem(category, category == "Meals")
+                    CategoryItem(category, category == "Meals", themeChoice)
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("Popular Meals", color = TextWhite, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Popular Meals", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(modifier = Modifier.fillMaxWidth()) {
@@ -135,26 +160,123 @@ fun StudentHomeScreen(
                     name = "Curry & Rice",
                     image = "🍛",
                     isHot = true,
+                    themeChoice = themeChoice,
                     modifier = Modifier.weight(1f)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 PopularMealCard(
                     name = "Steak & Chips",
                     image = "🥩",
+                    themeChoice = themeChoice,
                     modifier = Modifier.weight(1f)
                 )
             }
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Text("Appearance", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { showThemeDialog = true },
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+            ) {
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            modifier = Modifier.size(40.dp),
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (themeChoice == "dark") Color(0xFF3D2A1D) else LightIconBg
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Default.Palette,
+                                    contentDescription = null,
+                                    tint = PrimaryOrange,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Column {
+                            Text("Theme", color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+                            val themeLabel = when(themeChoice) {
+                                "dark" -> "Dark Ember"
+                                "light" -> "Campus Light"
+                                else -> "System Default"
+                            }
+                            Text(themeLabel, color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 12.sp)
+                        }
+                    }
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = if (themeChoice == "dark") TextGray else LightTextSecondary)
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
-fun CategoryItem(name: String, isSelected: Boolean) {
+fun ThemeDialog(
+    currentTheme: String,
+    onDismiss: () -> Unit,
+    onSelect: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Select Theme", color = MaterialTheme.colorScheme.onBackground) },
+        text = {
+            Column {
+                ThemeOption("Dark Ember", "dark", currentTheme, onSelect)
+                ThemeOption("Campus Light", "light", currentTheme, onSelect)
+                ThemeOption("System Default", "system", currentTheme, onSelect)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel", color = PrimaryOrange)
+            }
+        },
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = MaterialTheme.colorScheme.onBackground,
+        textContentColor = MaterialTheme.colorScheme.onBackground
+    )
+}
+
+@Composable
+fun ThemeOption(label: String, value: String, currentTheme: String, onSelect: (String) -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable { onSelect(value) }
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = currentTheme == value,
+            onClick = { onSelect(value) },
+            colors = RadioButtonDefaults.colors(selectedColor = PrimaryOrange)
+        )
+        Spacer(Modifier.width(12.dp))
+        Text(label, color = MaterialTheme.colorScheme.onBackground)
+    }
+}
+
+@Composable
+fun CategoryItem(name: String, isSelected: Boolean, themeChoice: String = "dark") {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(
             modifier = Modifier.size(64.dp),
             shape = RoundedCornerShape(16.dp),
-            color = if (isSelected) PrimaryOrange else CardBackground
+            color = if (isSelected) PrimaryOrange else MaterialTheme.colorScheme.surfaceVariant
         ) {
             Box(contentAlignment = Alignment.Center) {
                 // Placeholder icons
@@ -169,16 +291,16 @@ fun CategoryItem(name: String, isSelected: Boolean) {
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
-        Text(name, color = if (isSelected) PrimaryOrange else TextGray, fontSize = 12.sp)
+        Text(name, color = if (isSelected) PrimaryOrange else (if (themeChoice == "dark") TextGray else LightTextSecondary), fontSize = 12.sp)
     }
 }
 
 @Composable
-fun PopularMealCard(name: String, image: String, isHot: Boolean = false, modifier: Modifier = Modifier) {
+fun PopularMealCard(name: String, image: String, isHot: Boolean = false, themeChoice: String = "dark", modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.height(160.dp),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             if (isHot) {
@@ -203,9 +325,9 @@ fun PopularMealCard(name: String, image: String, isHot: Boolean = false, modifie
 }
 
 @Composable
-fun StudentBottomBar(currentScreen: String) {
+fun StudentBottomBar(currentScreen: String, themeChoice: String = "dark") {
     NavigationBar(
-        containerColor = Color(0xFF1A110A),
+        containerColor = if (themeChoice == "dark") Color(0xFF1A110A) else LightSurface,
         tonalElevation = 8.dp
     ) {
         NavigationBarItem(
@@ -216,8 +338,8 @@ fun StudentBottomBar(currentScreen: String) {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = PrimaryOrange,
                 selectedTextColor = PrimaryOrange,
-                unselectedIconColor = TextGray,
-                unselectedTextColor = TextGray,
+                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 indicatorColor = Color.Transparent
             )
         )
@@ -229,8 +351,8 @@ fun StudentBottomBar(currentScreen: String) {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = PrimaryOrange,
                 selectedTextColor = PrimaryOrange,
-                unselectedIconColor = TextGray,
-                unselectedTextColor = TextGray,
+                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 indicatorColor = Color.Transparent
             )
         )
@@ -246,8 +368,8 @@ fun StudentBottomBar(currentScreen: String) {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = PrimaryOrange,
                 selectedTextColor = PrimaryOrange,
-                unselectedIconColor = TextGray,
-                unselectedTextColor = TextGray,
+                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 indicatorColor = Color.Transparent
             )
         )
@@ -259,8 +381,8 @@ fun StudentBottomBar(currentScreen: String) {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = PrimaryOrange,
                 selectedTextColor = PrimaryOrange,
-                unselectedIconColor = TextGray,
-                unselectedTextColor = TextGray,
+                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 indicatorColor = Color.Transparent
             )
         )

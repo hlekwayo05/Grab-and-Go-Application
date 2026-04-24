@@ -23,19 +23,26 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun NavGraph(navController: NavHostController) {
+fun NavGraph(
+    navController: NavHostController,
+    themeChoice: String = "dark",
+    onThemeChange: (String) -> Unit = {},
+    onThemeToggle: () -> Unit = {}
+) {
     NavHost(
         navController = navController,
         startDestination = Screen.Welcome.route
     ) {
         composable(Screen.Welcome.route) {
             WelcomeScreen(
+                themeChoice = themeChoice,
                 onStudentClick = { navController.navigate(Screen.Login.route) },
                 onStaffClick = { navController.navigate(Screen.StaffDashboard.route) }
             )
         }
         composable(Screen.Login.route) {
             LoginScreen(
+                themeChoice = themeChoice,
                 onBackClick = { navController.popBackStack() },
                 onSignUpClick = { navController.navigate(Screen.SignUp.route) },
                 onLoginSuccess = { navController.navigate(Screen.StudentHome.route) },
@@ -44,6 +51,7 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Screen.SignUp.route) {
             SignUpScreen(
+                themeChoice = themeChoice,
                 onBackClick = { navController.popBackStack() },
                 onLoginClick = { navController.popBackStack() },
                 onSignUpSuccess = { navController.navigate(Screen.StudentHome.route) }
@@ -51,21 +59,29 @@ fun NavGraph(navController: NavHostController) {
         }
         composable(Screen.ResetPassword.route) {
             ResetPasswordScreen(
+                themeChoice = themeChoice,
                 onBackClick = { navController.popBackStack() }
             )
         }
         composable(Screen.StudentHome.route) {
             StudentHomeScreen(
+                themeChoice = themeChoice,
+                onThemeToggle = onThemeToggle,
+                onThemeChange = onThemeChange,
                 onOrderClick = { navController.navigate(Screen.TrackOrder.route) }
             )
         }
         composable(Screen.TrackOrder.route) {
             TrackOrderScreen(
+                themeChoice = themeChoice,
                 onBackClick = { navController.popBackStack() }
             )
         }
         composable(Screen.StaffDashboard.route) {
-            StaffDashboardScreen()
+            StaffDashboardScreen(
+                themeChoice = themeChoice,
+                onThemeChange = onThemeChange
+            )
         }
     }
 }

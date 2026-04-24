@@ -20,6 +20,7 @@ import com.example.grabngo2.ui.theme.*
 
 @Composable
 fun WelcomeScreen(
+    themeChoice: String = "dark",
     onStudentClick: () -> Unit,
     onStaffClick: () -> Unit
 ) {
@@ -27,14 +28,25 @@ fun WelcomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF2D1B10),
-                        DarkBackground
-                    ),
-                    startY = 0f,
-                    endY = 1000f
-                )
+                brush = if (themeChoice == "dark") {
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF2D1B10),
+                            DarkBackground
+                        ),
+                        startY = 0f,
+                        endY = 1000f
+                    )
+                } else {
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFFEBDD),
+                            LightBackground
+                        ),
+                        startY = 0f,
+                        endY = 1000f
+                    )
+                }
             )
     ) {
         Column(
@@ -53,7 +65,7 @@ fun WelcomeScreen(
 
             Text(
                 text = "Welcome to",
-                color = TextWhite,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -66,7 +78,7 @@ fun WelcomeScreen(
             
             Text(
                 text = "Skip the queue. Order ahead.",
-                color = TextGray,
+                color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -75,7 +87,7 @@ fun WelcomeScreen(
 
             Text(
                 text = "WHO ARE YOU?",
-                color = TextGray,
+                color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp
@@ -87,6 +99,7 @@ fun WelcomeScreen(
                 title = "Student",
                 description = "Browse the menu, order food & track your pickup time",
                 icon = "🎓",
+                themeChoice = themeChoice,
                 onClick = onStudentClick
             )
 
@@ -96,6 +109,7 @@ fun WelcomeScreen(
                 title = "Cafeteria Staff",
                 description = "Manage orders, update the menu & mark orders ready",
                 icon = "👨‍🍳",
+                themeChoice = themeChoice,
                 onClick = onStaffClick
             )
 
@@ -103,7 +117,7 @@ fun WelcomeScreen(
 
             Text(
                 text = "By continuing you agree to our Terms of Service & Privacy Policy",
-                color = TextGray,
+                color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 fontSize = 12.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 24.dp)
@@ -117,6 +131,7 @@ fun RoleCard(
     title: String,
     description: String,
     icon: String,
+    themeChoice: String = "dark",
     onClick: () -> Unit
 ) {
     Card(
@@ -124,7 +139,7 @@ fun RoleCard(
             .fillMaxWidth()
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier
@@ -135,7 +150,7 @@ fun RoleCard(
             Surface(
                 modifier = Modifier.size(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                color = Color(0xFF3D2A1D)
+                color = if (themeChoice == "dark") Color(0xFF3D2A1D) else LightIconBg
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(text = icon, fontSize = 24.sp)
@@ -149,13 +164,13 @@ fun RoleCard(
             ) {
                 Text(
                     text = title,
-                    color = TextWhite,
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = description,
-                    color = TextGray,
+                    color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                     fontSize = 14.sp
                 )
             }
@@ -163,7 +178,7 @@ fun RoleCard(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                 contentDescription = null,
-                tint = TextGray,
+                tint = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 modifier = Modifier.size(20.dp)
             )
         }

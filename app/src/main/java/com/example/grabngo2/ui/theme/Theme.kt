@@ -22,22 +22,37 @@ private val DarkColorScheme = darkColorScheme(
     surfaceVariant = CardBackground
 )
 
-// For this specific design, we'll mostly use the DarkColorScheme look
-private val LightColorScheme = DarkColorScheme
+private val LightColorScheme = lightColorScheme(
+    primary = PrimaryOrange,
+    onPrimary = LightTextPrimary,
+    secondary = SecondaryOrange,
+    background = LightBackground,
+    surface = LightSurface,
+    onBackground = LightTextPrimary,
+    onSurface = LightTextPrimary,
+    surfaceVariant = LightCardBackground
+)
 
 @Composable
 fun Grabngo2Theme(
+    themeChoice: String = "dark",
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = DarkColorScheme // Forced dark theme as per design
+    val colorScheme = when (themeChoice) {
+        "light" -> LightColorScheme
+        "dark" -> DarkColorScheme
+        "system" -> if (darkTheme) DarkColorScheme else LightColorScheme
+        else -> DarkColorScheme
+    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
+            val isLight = if (themeChoice == "system") !darkTheme else themeChoice == "light"
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = isLight
         }
     }
 

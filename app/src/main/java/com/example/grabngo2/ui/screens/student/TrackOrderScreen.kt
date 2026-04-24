@@ -18,15 +18,16 @@ import com.example.grabngo2.ui.theme.*
 
 @Composable
 fun TrackOrderScreen(
+    themeChoice: String = "dark",
     onBackClick: () -> Unit
 ) {
     Scaffold(
-        bottomBar = { StudentBottomBar(currentScreen = "orders") }
+        bottomBar = { StudentBottomBar(currentScreen = "orders", themeChoice = themeChoice) }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(DarkBackground)
+                .background(MaterialTheme.colorScheme.background)
                 .padding(padding)
                 .padding(24.dp)
         ) {
@@ -35,12 +36,12 @@ fun TrackOrderScreen(
                     onClick = onBackClick,
                     modifier = Modifier
                         .size(40.dp)
-                        .background(CardBackground, RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextWhite)
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onBackground)
                 }
                 Spacer(modifier = Modifier.width(16.dp))
-                Text("Track Order", color = TextWhite, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Text("Track Order", color = MaterialTheme.colorScheme.onBackground, fontSize = 24.sp, fontWeight = FontWeight.Bold)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -49,7 +50,7 @@ fun TrackOrderScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.cardColors(containerColor = CardBackground)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
                     Row(
@@ -57,7 +58,7 @@ fun TrackOrderScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Order Number", color = TextGray, fontSize = 14.sp)
+                        Text("Order Number", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp)
                         Text("#GNG-0042", color = PrimaryOrange, fontWeight = FontWeight.Bold)
                     }
 
@@ -68,10 +69,10 @@ fun TrackOrderScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        TrackStep("Placed", isCompleted = true)
-                        TrackStep("Confirmed", isCompleted = true)
-                        TrackStep("Preparing", isActive = true)
-                        TrackStep("Ready", isCompleted = false)
+                        TrackStep("Placed", themeChoice = themeChoice, isCompleted = true)
+                        TrackStep("Confirmed", themeChoice = themeChoice, isCompleted = true)
+                        TrackStep("Preparing", themeChoice = themeChoice, isActive = true)
+                        TrackStep("Ready", themeChoice = themeChoice, isCompleted = false)
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
@@ -88,7 +89,7 @@ fun TrackOrderScreen(
                         )
                         Text(
                             "Estimated pickup time • ~8 mins",
-                            color = TextGray,
+                            color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                             fontSize = 14.sp
                         )
                     }
@@ -97,17 +98,17 @@ fun TrackOrderScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            Text("Your Order", color = TextWhite, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text("Your Order", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             
             Spacer(modifier = Modifier.height(16.dp))
 
-            OrderItem("Curry & Rice", "x1", "R30", "🍛")
+            OrderItem("Curry & Rice", "x1", "R30", "🍛", themeChoice)
             Spacer(modifier = Modifier.height(12.dp))
-            OrderItem("Coke 500ml", "x1", "R15", "🥤")
+            OrderItem("Coke 500ml", "x1", "R15", "🥤", themeChoice)
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            HorizontalDivider(color = CardBackground)
+            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
             
             Spacer(modifier = Modifier.height(24.dp))
             
@@ -115,7 +116,7 @@ fun TrackOrderScreen(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Total", color = TextGray, fontSize = 18.sp)
+                Text("Total", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 18.sp)
                 Text("R45", color = PrimaryOrange, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             }
         }
@@ -123,12 +124,12 @@ fun TrackOrderScreen(
 }
 
 @Composable
-fun TrackStep(label: String, isCompleted: Boolean = false, isActive: Boolean = false) {
+fun TrackStep(label: String, themeChoice: String = "dark", isCompleted: Boolean = false, isActive: Boolean = false) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Surface(
             modifier = Modifier.size(32.dp),
             shape = CircleShape,
-            color = if (isCompleted) StatusGreen else if (isActive) PrimaryOrange else Color(0xFF3D2A1D)
+            color = if (isCompleted) StatusGreen else if (isActive) PrimaryOrange else (if (themeChoice == "dark") Color(0xFF3D2A1D) else LightIconBg)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 if (isCompleted) {
@@ -143,18 +144,18 @@ fun TrackStep(label: String, isCompleted: Boolean = false, isActive: Boolean = f
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             label,
-            color = if (isActive) PrimaryOrange else if (isCompleted) StatusGreen else TextGray,
+            color = if (isActive) PrimaryOrange else if (isCompleted) StatusGreen else (if (themeChoice == "dark") TextGray else LightTextSecondary),
             fontSize = 12.sp
         )
     }
 }
 
 @Composable
-fun OrderItem(name: String, qty: String, price: String, icon: String) {
+fun OrderItem(name: String, qty: String, price: String, icon: String, themeChoice: String = "dark") {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CardBackground)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -163,7 +164,7 @@ fun OrderItem(name: String, qty: String, price: String, icon: String) {
             Surface(
                 modifier = Modifier.size(48.dp),
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFF3D2A1D)
+                color = if (themeChoice == "dark") Color(0xFF3D2A1D) else LightIconBg
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Text(icon, fontSize = 24.sp)
@@ -171,8 +172,8 @@ fun OrderItem(name: String, qty: String, price: String, icon: String) {
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(name, color = TextWhite, fontWeight = FontWeight.Bold)
-                Text(qty, color = TextGray, fontSize = 14.sp)
+                Text(name, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+                Text(qty, color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp)
             }
             Text(price, color = PrimaryOrange, fontWeight = FontWeight.Bold)
         }

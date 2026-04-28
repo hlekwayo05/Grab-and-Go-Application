@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "592639228107",
+    "project_id": "grabngo-3ff42",
+    "storage_bucket": "grabngo-3ff42.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592639228107:android:5ebf3fb0006ba3a642034e",
+        "android_client_info": {
+          "package_name": "com.example.grabngo2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8EoQs6vUXttK943_-jmh0HUtREL8yR_o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

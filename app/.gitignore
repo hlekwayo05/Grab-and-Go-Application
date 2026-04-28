@@ -15,6 +15,10 @@ local.properties
 /.idea
 *.iml
 
+# Firebase configuration
+# google-services.json must be placed in the app/ folder and is excluded from git.
+google-services.json
+
 # Keystore files (keep these secret!)
 *.jks
 *.keystore

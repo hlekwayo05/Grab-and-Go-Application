@@ -1,13 +1,10 @@
 package com.example.grabngo2.ui.screens.auth
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Visibility
@@ -15,18 +12,23 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.grabngo2.ui.components.AlignRightText
+import com.example.grabngo2.ui.components.AuthTextField
+import com.example.grabngo2.ui.components.MainButton
 import com.example.grabngo2.ui.theme.*
+import com.example.grabngo2.ui.viewmodel.AuthState
+import com.example.grabngo2.ui.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
     themeChoice: String = "dark",
+    viewModel: AuthViewModel,
     onBackClick: () -> Unit,
     onSignUpClick: () -> Unit,
     onLoginSuccess: () -> Unit,
@@ -34,6 +36,20 @@ fun LoginScreen(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf<String?>(null) }
+
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            onLoginSuccess()
+        } else if (authState is AuthState.Error) {
+            snackbarHostState.showSnackbar((authState as AuthState.Error).message)
+            viewModel.clearError()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -132,10 +148,16 @@ fun LoginScreen(
             AuthTextField(
                 label = "STUDENT EMAIL",
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = { 
+                    email = it
+                    emailError = if (it.isNotBlank() && !it.endsWith("@testump.ac.za") && !it.endsWith("@ump.ac.za")) {
+                        "Must be a university email (@ump.ac.za)"
+                    } else null
+                },
                 placeholder = "you@university.ac.za",
                 icon = Icons.Default.Email,
-                themeChoice = themeChoice
+                themeChoice = themeChoice,
+                errorText = emailError
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -160,7 +182,14 @@ fun LoginScreen(
 
             MainButton(
                 text = "Log In",
-                onClick = onLoginSuccess
+                enabled = authState !is AuthState.Loading,
+                onClick = {
+                    if (email.isBlank() || password.isBlank()) {
+                        scope.launch { snackbarHostState.showSnackbar("Please enter email and password") }
+                    } else if (emailError == null) {
+                        viewModel.signInStudent(email, password)
+                    }
+                }
             )
             
             Spacer(modifier = Modifier.height(16.dp))
@@ -174,85 +203,19 @@ fun LoginScreen(
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
-    }
-}
 
-@Composable
-fun AuthTextField(
-    label: String,
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    isPassword: Boolean = false,
-    trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
-    themeChoice: String = "dark"
-) {
-    Column {
-        Text(
-            text = label,
-            color = if (themeChoice == "dark") TextGray else LightTextSecondary,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 1.sp
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
-            placeholder = { Text(placeholder, color = (if (themeChoice == "dark") TextGray else LightTextSecondary).copy(alpha = 0.5f)) },
-            leadingIcon = { Icon(icon, contentDescription = null, tint = if (themeChoice == "dark") TextGray else LightTextSecondary) },
-            trailingIcon = trailingIcon?.let { 
-                { Icon(it, contentDescription = null, tint = if (themeChoice == "dark") TextGray else LightTextSecondary) }
-            },
-            visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
-            keyboardOptions = KeyboardOptions(keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Email),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = PrimaryOrange,
-                unfocusedBorderColor = Color.Transparent,
-                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                focusedTextColor = MaterialTheme.colorScheme.onBackground,
-                unfocusedTextColor = MaterialTheme.colorScheme.onBackground
-            ),
-            shape = RoundedCornerShape(16.dp)
-        )
-    }
-}
-
-@Composable
-fun MainButton(
-    text: String,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text, color = TextWhite, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+        if (authState is AuthState.Loading) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = PrimaryOrange)
+            }
         }
-    }
-}
 
-@Composable
-fun AlignRightText(text: String, onClick: () -> Unit) {
-    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
-        Text(
-            text = text,
-            color = PrimaryOrange,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier
-                .padding(vertical = 12.dp)
-                .clickable { onClick() }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 }

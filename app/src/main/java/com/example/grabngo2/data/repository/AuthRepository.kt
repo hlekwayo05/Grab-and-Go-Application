@@ -138,4 +138,16 @@ class AuthRepository {
     fun getCurrentUser(): FirebaseUser? {
         return auth.currentUser
     }
+
+    /**
+     * Reloads the current user's state from Firebase.
+     */
+    suspend fun reloadUser(): Result<FirebaseUser?> {
+        return try {
+            auth.currentUser?.reload()?.await()
+            Result.success(auth.currentUser)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

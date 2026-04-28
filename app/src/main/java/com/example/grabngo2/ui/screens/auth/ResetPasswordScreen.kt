@@ -19,14 +19,35 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.grabngo2.ui.components.AuthTextField
 import com.example.grabngo2.ui.theme.*
+import com.example.grabngo2.ui.viewmodel.AuthState
+import com.example.grabngo2.ui.viewmodel.AuthViewModel
+import kotlinx.coroutines.launch
 
 @Composable
 fun ResetPasswordScreen(
     themeChoice: String = "dark",
+    viewModel: AuthViewModel,
     onBackClick: () -> Unit
 ) {
     var email by remember { mutableStateOf("") }
+    var isSuccess by remember { mutableStateOf(false) }
+    
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            isSuccess = true
+            viewModel.clearError()
+        } else if (authState is AuthState.Error) {
+            snackbarHostState.showSnackbar((authState as AuthState.Error).message)
+            viewModel.clearError()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -76,7 +97,9 @@ fun ResetPasswordScreen(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "No stress! Enter your student email and we'll send you a reset link in seconds.",
+                text = if (isSuccess) 
+                    "Check your inbox! We've sent a link to $email"
+                    else "No stress! Enter your student email and we'll send you a reset link in seconds.",
                 color = if (themeChoice == "dark") TextGray else LightTextSecondary,
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 8.dp)
@@ -90,77 +113,128 @@ fun ResetPasswordScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                StepItem(number = "1", label = "Enter Email", isActive = true, isCompleted = true)
-                Box(modifier = Modifier.weight(1f).height(2.dp).background(PrimaryOrange))
-                StepItem(number = "2", label = "Check Inbox", isActive = true)
+                StepItem(number = "1", label = "Enter Email", isActive = true, isCompleted = isSuccess)
+                Box(modifier = Modifier.weight(1f).height(2.dp).background(if (isSuccess) PrimaryOrange else MaterialTheme.colorScheme.surfaceVariant))
+                StepItem(number = "2", label = "Check Inbox", isActive = isSuccess)
                 Box(modifier = Modifier.weight(1f).height(2.dp).background(MaterialTheme.colorScheme.surfaceVariant))
                 StepItem(number = "3", label = "New Pass", isActive = false)
             }
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            AuthTextField(
-                label = "STUDENT EMAIL",
-                value = email,
-                onValueChange = { email = it },
-                placeholder = "you@university.ac.za",
-                icon = Icons.Default.Email,
-                themeChoice = themeChoice
-            )
+            if (!isSuccess) {
+                AuthTextField(
+                    label = "STUDENT EMAIL",
+                    value = email,
+                    onValueChange = { email = it },
+                    placeholder = "you@university.ac.za",
+                    icon = Icons.Default.Email,
+                    themeChoice = themeChoice
+                )
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Row(
-                    modifier = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
-                    Text(text = "📧", fontSize = 16.sp)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "A reset link will be sent to your university email. Check your inbox and spam folder. Link expires in 15 minutes.",
-                        color = if (themeChoice == "dark") TextGray else LightTextSecondary,
-                        fontSize = 12.sp
-                    )
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "📧", fontSize = 16.sp)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "A reset link will be sent to your university email. Check your inbox and spam folder. Link expires in 15 minutes.",
+                            color = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+            } else {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xFFE8F5E9).copy(alpha = 0.1f) // Success background hint
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Link Sent Successfully!",
+                            color = Color.Green,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Please check $email and follow the instructions to set a new password.",
+                            color = if (themeChoice == "dark") TextGray else LightTextSecondary,
+                            fontSize = 14.sp
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Button(
-                onClick = { /* Handle reset */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700)),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text("Send Reset Link →", color = Color.Black, fontWeight = FontWeight.Bold)
+            if (!isSuccess) {
+                Button(
+                    onClick = { 
+                        if (email.contains("@")) {
+                            viewModel.sendPasswordReset(email)
+                        } else {
+                            scope.launch { snackbarHostState.showSnackbar("Please enter a valid email") }
+                        }
+                    },
+                    enabled = authState !is AuthState.Loading,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFFD700)),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    if (authState is AuthState.Loading) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Color.Black)
+                    } else {
+                        Text("Send Reset Link →", color = Color.Black, fontWeight = FontWeight.Bold)
+                    }
+                }
+            } else {
+                Button(
+                    onClick = { onBackClick() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
+                    shape = RoundedCornerShape(16.dp)
+                ) {
+                    Text("Back to Log In", color = TextWhite, fontWeight = FontWeight.Bold)
+                }
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("← Back to ", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp)
-                Text(
-                    "Log In",
-                    color = PrimaryOrange,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { onBackClick() }
-                )
+            if (!isSuccess) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("← Back to ", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp)
+                    Text(
+                        "Log In",
+                        color = PrimaryOrange,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { onBackClick() }
+                    )
+                }
             }
             
             Spacer(modifier = Modifier.height(16.dp))
         }
+
+        SnackbarHost(hostState = snackbarHostState, modifier = Modifier.align(Alignment.BottomCenter))
     }
 }
 

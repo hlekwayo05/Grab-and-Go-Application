@@ -21,11 +21,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.grabngo2.ui.components.AuthTextField
+import com.example.grabngo2.ui.components.MainButton
 import com.example.grabngo2.ui.theme.*
+import com.example.grabngo2.ui.viewmodel.AuthState
+import com.example.grabngo2.ui.viewmodel.AuthViewModel
 
 @Composable
 fun SignUpScreen(
     themeChoice: String = "dark",
+    viewModel: AuthViewModel,
     onBackClick: () -> Unit,
     onLoginClick: () -> Unit,
     onSignUpSuccess: () -> Unit
@@ -36,6 +42,21 @@ fun SignUpScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var agreed by remember { mutableStateOf(false) }
+
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var studentNumberError by remember { mutableStateOf<String?>(null) }
+    
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(authState) {
+        if (authState is AuthState.Success) {
+            onSignUpSuccess()
+        } else if (authState is AuthState.Error) {
+            snackbarHostState.showSnackbar((authState as AuthState.Error).message)
+            viewModel.clearError()
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -161,10 +182,16 @@ fun SignUpScreen(
             AuthTextField(
                 label = "STUDENT NUMBER",
                 value = studentNumber,
-                onValueChange = { studentNumber = it },
+                onValueChange = { 
+                    if (it.length <= 8) {
+                        studentNumber = it
+                        studentNumberError = if (it.length > 0 && it.length < 8) "Must be 8 digits" else null
+                    }
+                },
                 placeholder = "e.g. 12345678",
                 icon = Icons.Default.Style,
-                themeChoice = themeChoice
+                themeChoice = themeChoice,
+                errorText = studentNumberError
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -172,10 +199,16 @@ fun SignUpScreen(
             AuthTextField(
                 label = "STUDENT EMAIL",
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = { 
+                    email = it
+                    emailError = if (it.isNotBlank() && !it.endsWith("@testump.ac.za") && !it.endsWith("@ump.ac.za")) {
+                        "Must be a university email (@ump.ac.za)"
+                    } else null
+                },
                 placeholder = "you@university.ac.za",
                 icon = Icons.Default.Email,
-                themeChoice = themeChoice
+                themeChoice = themeChoice,
+                errorText = emailError
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -190,6 +223,10 @@ fun SignUpScreen(
                 trailingIcon = Icons.Default.Visibility,
                 themeChoice = themeChoice
             )
+            
+            if (password.isNotEmpty()) {
+                PasswordStrengthMeter(password)
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -215,10 +252,53 @@ fun SignUpScreen(
 
             MainButton(
                 text = "Create Account",
-                onClick = onSignUpSuccess
+                enabled = agreed && authState !is AuthState.Loading && emailError == null && studentNumberError == null && firstName.isNotBlank() && lastName.isNotBlank() && studentNumber.length == 8 && email.isNotBlank() && password.length >= 6,
+                onClick = {
+                    viewModel.signUpStudent(email, password, firstName, lastName, studentNumber)
+                }
             )
             
             Spacer(modifier = Modifier.height(32.dp))
         }
+
+        if (authState is AuthState.Loading) {
+            Box(
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = PrimaryOrange)
+            }
+        }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
+    }
+}
+
+@Composable
+fun PasswordStrengthMeter(password: String) {
+    val strength = remember(password) {
+        when {
+            password.length < 8 -> "Weak"
+            password.any { it.isDigit() } && password.any { !it.isLetterOrDigit() } -> "Strong"
+            password.any { it.isDigit() } -> "Fair"
+            else -> "Weak"
+        }
+    }
+    val color = when (strength) {
+        "Weak" -> Color.Red
+        "Fair" -> Color(0xFFFFA500) // Amber
+        "Strong" -> Color.Green
+        else -> Color.Gray
+    }
+
+    Row(
+        modifier = Modifier.padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text("Strength: ", fontSize = 12.sp, color = TextGray)
+        Text(strength, fontSize = 12.sp, color = color, fontWeight = FontWeight.Bold)
     }
 }

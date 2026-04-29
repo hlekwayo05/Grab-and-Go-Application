@@ -1,6 +1,6 @@
+// GrabNGo | University of Mpumalanga 2026
 package com.example.grabngo2.ui.screens.student
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,21 +18,48 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.grabngo2.data.model.Cafeteria
+import com.example.grabngo2.data.model.MenuItem
+import com.example.grabngo2.data.model.User
 import com.example.grabngo2.ui.theme.*
+import com.example.grabngo2.ui.viewmodel.StudentViewModel
+import java.util.*
 
+/**
+ * Student Home Screen: displays personalized greetings, cafeteria selection,
+ * featured specials, and popular meals.
+ */
 @Composable
 fun StudentHomeScreen(
     themeChoice: String = "dark",
+    currentUser: User,
+    viewModel: StudentViewModel,
     onThemeToggle: () -> Unit = {},
     onThemeChange: (String) -> Unit = {},
-    onOrderClick: () -> Unit
+    onOrderClick: () -> Unit,
+    onCategoryClick: (String) -> Unit = {},
+    onCartClick: () -> Unit = {},
+    onHistoryClick: () -> Unit = {}
 ) {
     var showThemeDialog by remember { mutableStateOf(false) }
+
+    val selectedCafeteriaId by viewModel.selectedCafeteriaId.collectAsStateWithLifecycle()
+    val cafeterias by viewModel.cafeterias.collectAsStateWithLifecycle()
+    val featuredItem by viewModel.featuredItem.collectAsStateWithLifecycle()
+    val cartItemCount by viewModel.cartItemCount.collectAsStateWithLifecycle()
+    val popularItems by viewModel.menuItems.collectAsStateWithLifecycle()
+
+    val selectedCafeteria = cafeterias.find { it.cafeteriaId == selectedCafeteriaId } ?: Cafeteria()
+
+    // Load student specific data (like active orders) once
+    LaunchedEffect(currentUser.userId) {
+        viewModel.loadStudentData(currentUser.userId)
+    }
 
     if (showThemeDialog) {
         ThemeDialog(
@@ -46,7 +73,15 @@ fun StudentHomeScreen(
     }
 
     Scaffold(
-        bottomBar = { StudentBottomBar(currentScreen = "home", themeChoice = themeChoice) }
+        bottomBar = { 
+            StudentBottomBar(
+                currentScreen = "home", 
+                themeChoice = themeChoice,
+                cartCount = cartItemCount,
+                onCartClick = onCartClick,
+                onOrdersClick = onHistoryClick
+            ) 
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -56,13 +91,21 @@ fun StudentHomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
         ) {
+            // Personalized Greeting
+            val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+            val greeting = when {
+                hour < 12 -> "Good morning"
+                hour < 17 -> "Good afternoon"
+                else -> "Good evening"
+            }
+            
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Good afternoon 👋", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp)
+                    Text("$greeting, ${currentUser.firstName} 👋", color = if (themeChoice == "dark") TextGray else LightTextSecondary, fontSize = 14.sp)
                     Text(
                         "What are you hungry for?",
                         color = MaterialTheme.colorScheme.onBackground,
@@ -85,53 +128,88 @@ fun StudentHomeScreen(
                 }
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Cafeteria Selector Chips
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                CafeteriaChip(
+                    name = "Main Cafeteria",
+                    isSelected = selectedCafeteriaId == "main-caf",
+                    onClick = { viewModel.selectCafeteria("main-caf") }
+                )
+                CafeteriaChip(
+                    name = "Snack Bar",
+                    isSelected = selectedCafeteriaId == "snack-bar",
+                    onClick = { viewModel.selectCafeteria("snack-bar") }
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Special Offer Card
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-                shape = RoundedCornerShape(24.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(PrimaryOrange, Color(0xFFFF9800))
-                            )
-                        )
-                        .padding(20.dp)
+            // Special Offer Banner or Closed Message
+            if (!selectedCafeteria.isOpen) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().height(120.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
-                    Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
-                        Surface(
-                            color = Color.White.copy(alpha = 0.2f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(Icons.Default.Schedule, contentDescription = null, tint = TextGray)
+                            Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                "🔥 Today's Special",
-                                color = TextWhite,
-                                fontSize = 12.sp,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                                "Cafeteria closed - Opens at ${selectedCafeteria.openingTime}",
+                                color = TextGray,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
                             )
                         }
-                        
-                        Column {
-                            Text(
-                                "Pap & Chakalaka\nonly R25!",
-                                color = TextWhite,
-                                fontSize = 22.sp,
-                                fontWeight = FontWeight.Bold
+                    }
+                }
+            } else if (featuredItem != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth().height(180.dp),
+                    shape = RoundedCornerShape(24.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                brush = Brush.linearGradient(
+                                    colors = listOf(PrimaryOrange, Color(0xFFFF9800))
+                                )
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(
-                                onClick = onOrderClick,
-                                colors = ButtonDefaults.buttonColors(containerColor = TextWhite),
-                                shape = RoundedCornerShape(12.dp),
-                                contentPadding = PaddingValues(horizontal = 20.dp)
+                            .padding(20.dp)
+                    ) {
+                        Column(modifier = Modifier.fillMaxHeight(), verticalArrangement = Arrangement.SpaceBetween) {
+                            Surface(
+                                color = Color.White.copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text("Order Now", color = PrimaryOrange, fontWeight = FontWeight.Bold)
+                                Text(
+                                    "🔥 Today's Special",
+                                    color = TextWhite,
+                                    fontSize = 12.sp,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                                )
+                            }
+                            
+                            Column {
+                                Text(
+                                    "${featuredItem?.name}\nonly R${featuredItem?.price}!",
+                                    color = TextWhite,
+                                    fontSize = 22.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Button(
+                                    onClick = onOrderClick,
+                                    colors = ButtonDefaults.buttonColors(containerColor = TextWhite),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(horizontal = 20.dp)
+                                ) {
+                                    Text("Order Now", color = PrimaryOrange, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                     }
@@ -146,7 +224,7 @@ fun StudentHomeScreen(
             val categories = listOf("Meals", "Snacks", "Drinks", "Combos", "Desserts")
             LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 items(categories) { category ->
-                    CategoryItem(category, category == "Meals", themeChoice)
+                    CategoryItem(category, category == "Meals", themeChoice) { onCategoryClick(category) }
                 }
             }
 
@@ -155,21 +233,21 @@ fun StudentHomeScreen(
             Text("Popular Meals", color = MaterialTheme.colorScheme.onBackground, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Displaying first two popular items as cards
             Row(modifier = Modifier.fillMaxWidth()) {
-                PopularMealCard(
-                    name = "Curry & Rice",
-                    image = "🍛",
-                    isHot = true,
-                    themeChoice = themeChoice,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                PopularMealCard(
-                    name = "Steak & Chips",
-                    image = "🥩",
-                    themeChoice = themeChoice,
-                    modifier = Modifier.weight(1f)
-                )
+                popularItems.take(2).forEachIndexed { index, item ->
+                    if (index > 0) Spacer(modifier = Modifier.width(16.dp))
+                    PopularMealCard(
+                        item = item,
+                        themeChoice = themeChoice,
+                        isReadOnly = !selectedCafeteria.isOpen,
+                        onAddClick = { viewModel.addToCart(item) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (popularItems.isEmpty()) {
+                    Text("No meals available today.", color = TextGray, fontSize = 14.sp)
+                }
             }
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -271,15 +349,32 @@ fun ThemeOption(label: String, value: String, currentTheme: String, onSelect: (S
 }
 
 @Composable
-fun CategoryItem(name: String, isSelected: Boolean, themeChoice: String = "dark") {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+fun CafeteriaChip(name: String, isSelected: Boolean, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        color = if (isSelected) PrimaryOrange else Color.Transparent,
+        shape = RoundedCornerShape(12.dp),
+        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, TextGray.copy(alpha = 0.3f))
+    ) {
+        Text(
+            text = name,
+            color = if (isSelected) TextWhite else TextGray,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+    }
+}
+
+@Composable
+fun CategoryItem(name: String, isSelected: Boolean, themeChoice: String = "dark", onClick: () -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clickable { onClick() }) {
         Surface(
             modifier = Modifier.size(64.dp),
             shape = RoundedCornerShape(16.dp),
             color = if (isSelected) PrimaryOrange else MaterialTheme.colorScheme.surfaceVariant
         ) {
             Box(contentAlignment = Alignment.Center) {
-                // Placeholder icons
                 val icon = when(name) {
                     "Meals" -> "🍽️"
                     "Snacks" -> "🥪"
@@ -296,14 +391,20 @@ fun CategoryItem(name: String, isSelected: Boolean, themeChoice: String = "dark"
 }
 
 @Composable
-fun PopularMealCard(name: String, image: String, isHot: Boolean = false, themeChoice: String = "dark", modifier: Modifier = Modifier) {
+fun PopularMealCard(
+    item: MenuItem, 
+    themeChoice: String = "dark", 
+    isReadOnly: Boolean = false,
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = modifier.height(160.dp),
+        modifier = modifier.height(180.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
-            if (isHot) {
+            if (item.isFeatured) {
                 Surface(
                     modifier = Modifier.padding(8.dp).align(Alignment.TopEnd),
                     color = PrimaryOrange,
@@ -317,15 +418,51 @@ fun PopularMealCard(name: String, image: String, isHot: Boolean = false, themeCh
                     )
                 }
             }
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(image, fontSize = 48.sp)
+            
+            Column(
+                modifier = Modifier.fillMaxSize().padding(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(if (item.category == "drinks") "🥤" else "🍽️", fontSize = 32.sp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    item.name, 
+                    color = MaterialTheme.colorScheme.onBackground, 
+                    fontSize = 14.sp, 
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1
+                )
+                Text(
+                    "R${item.price}", 
+                    color = PrimaryOrange, 
+                    fontSize = 12.sp, 
+                    fontWeight = FontWeight.Bold
+                )
+                
+                if (!isReadOnly) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    IconButton(
+                        onClick = onAddClick,
+                        modifier = Modifier.size(32.dp).background(PrimaryOrange, CircleShape)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = "Add to cart", tint = TextWhite, modifier = Modifier.size(16.dp))
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun StudentBottomBar(currentScreen: String, themeChoice: String = "dark") {
+fun StudentBottomBar(
+    currentScreen: String, 
+    themeChoice: String = "dark",
+    cartCount: Int = 0,
+    onCartClick: () -> Unit = {},
+    onOrdersClick: () -> Unit = {}
+) {
     NavigationBar(
         containerColor = if (themeChoice == "dark") Color(0xFF1A110A) else LightSurface,
         tonalElevation = 8.dp
@@ -358,9 +495,13 @@ fun StudentBottomBar(currentScreen: String, themeChoice: String = "dark") {
         )
         NavigationBarItem(
             selected = currentScreen == "cart",
-            onClick = { },
+            onClick = onCartClick,
             icon = { 
-                BadgedBox(badge = { Badge { Text("2") } }) {
+                if (cartCount > 0) {
+                    BadgedBox(badge = { Badge(containerColor = PrimaryOrange) { Text(cartCount.toString(), color = TextWhite) } }) {
+                        Icon(Icons.Default.ShoppingCart, contentDescription = null)
+                    }
+                } else {
                     Icon(Icons.Default.ShoppingCart, contentDescription = null)
                 }
             },
@@ -375,7 +516,7 @@ fun StudentBottomBar(currentScreen: String, themeChoice: String = "dark") {
         )
         NavigationBarItem(
             selected = currentScreen == "orders",
-            onClick = { },
+            onClick = onOrdersClick,
             icon = { Icon(Icons.Default.Assignment, contentDescription = null) },
             label = { Text("Orders") },
             colors = NavigationBarItemDefaults.colors(

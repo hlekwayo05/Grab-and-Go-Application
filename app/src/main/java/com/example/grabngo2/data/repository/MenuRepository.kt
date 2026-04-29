@@ -41,4 +41,15 @@ class MenuRepository {
                 snapshot.toObject<Cafeteria>() ?: Cafeteria()
             }
     }
+
+    /**
+     * Returns a real-time flow of all cafeteria documents.
+     */
+    fun getAllCafeterias(): Flow<List<Cafeteria>> {
+        return firestore.collection("cafeterias")
+            .snapshots()
+            .map { snapshot ->
+                snapshot.documents.mapNotNull { it.toObject<Cafeteria>() }
+            }
+    }
 }

@@ -7,13 +7,19 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.getValue
+import com.example.grabngo2.data.model.User
 import com.example.grabngo2.ui.screens.auth.EmailVerifyPendingScreen
 import com.example.grabngo2.ui.screens.auth.LoginScreen
 import com.example.grabngo2.ui.screens.auth.ResetPasswordScreen
 import com.example.grabngo2.ui.screens.auth.SignUpScreen
+import com.example.grabngo2.ui.screens.student.CartScreen
+import com.example.grabngo2.ui.screens.student.MenuScreen
 import com.example.grabngo2.ui.screens.student.StudentHomeScreen
 import com.example.grabngo2.ui.screens.student.TrackOrderScreen
 import com.example.grabngo2.ui.viewmodel.AuthViewModel
+import com.example.grabngo2.ui.viewmodel.StudentViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 /**
  * Navigation graph for the student portal only.
@@ -47,6 +53,8 @@ fun StudentNavGraph(
     onThemeChange: (String) -> Unit
 ) {
     val authViewModel: AuthViewModel = viewModel()
+    val studentViewModel: StudentViewModel = viewModel()
+    val currentUser by authViewModel.currentUser.collectAsStateWithLifecycle()
 
     NavHost(
         navController = navController,
@@ -99,24 +107,54 @@ fun StudentNavGraph(
         composable(StudentScreen.Home.route) {
             StudentHomeScreen(
                 themeChoice = themeChoice,
+                currentUser = currentUser ?: User(),
+                viewModel = studentViewModel,
                 onThemeToggle = {
                     val nextTheme = if (themeChoice == "dark") "light" else "dark"
                     onThemeChange(nextTheme)
                 },
                 onThemeChange = onThemeChange,
-                onOrderClick = { navController.navigate(StudentScreen.TrackOrder.route.replace("{orderId}", "test_order")) }
+                onOrderClick = { navController.navigate(StudentScreen.TrackOrder.route.replace("{orderId}", "test_order")) },
+                onCategoryClick = { category ->
+                    val cafeteriaId = studentViewModel.selectedCafeteriaId.value
+                    navController.navigate(StudentScreen.Menu.route.replace("{cafeteriaId}", cafeteriaId))
+                },
+                onCartClick = { navController.navigate(StudentScreen.Cart.route) },
+                onHistoryClick = { navController.navigate(StudentScreen.OrderHistory.route) }
             )
         }
-        composable(StudentScreen.Menu.route) {
-            Text("Menu Screen Placeholder for Cafeteria: ${it.arguments?.getString("cafeteriaId")}")
+        composable(StudentScreen.Menu.route) { backStackEntry ->
+            val cafeteriaId = backStackEntry.arguments?.getString("cafeteriaId") ?: "main-caf"
+            MenuScreen(
+                cafeteriaId = cafeteriaId,
+                viewModel = studentViewModel,
+                themeChoice = themeChoice,
+                onBackClick = { navController.popBackStack() },
+                onCartClick = { navController.navigate(StudentScreen.Cart.route) }
+            )
         }
         composable(StudentScreen.Cart.route) {
-            Text("Shopping Cart Screen Placeholder")
-        }
-        composable(StudentScreen.TrackOrder.route) {
-            TrackOrderScreen(
+            CartScreen(
+                currentUser = currentUser ?: User(),
+                viewModel = studentViewModel,
                 themeChoice = themeChoice,
-                onBackClick = { navController.popBackStack() }
+                onBackClick = { navController.popBackStack() },
+                onOrderSuccess = { orderId ->
+                    navController.navigate(StudentScreen.TrackOrder.route.replace("{orderId}", orderId)) {
+                        popUpTo(StudentScreen.Home.route)
+                    }
+                }
+            )
+        }
+        composable(StudentScreen.TrackOrder.route) { backStackEntry ->
+            val orderId = backStackEntry.arguments?.getString("orderId") ?: ""
+            TrackOrderScreen(
+                orderId = orderId,
+                viewModel = studentViewModel,
+                currentUser = currentUser ?: User(),
+                themeChoice = themeChoice,
+                onBackClick = { navController.popBackStack() },
+                onCancelSuccess = { navController.popBackStack() }
             )
         }
         composable(StudentScreen.OrderHistory.route) {

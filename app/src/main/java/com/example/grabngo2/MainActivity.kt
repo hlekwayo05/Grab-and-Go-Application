@@ -59,6 +59,6 @@ class MainActivity : ComponentActivity() {
          * Flag to toggle between Student and Staff portals.
          * Set to true for Student Portal, false for Staff Portal.
          */
-        const val STUDENT_PORTAL = false
+        const val STUDENT_PORTAL = true
     }
 }

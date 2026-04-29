@@ -90,4 +90,21 @@ class OrderRepository {
                 snapshot.toObject<Order>() ?: Order()
             }
     }
+
+    /**
+     * Cancels an existing order by updating its status.
+     */
+    suspend fun cancelOrder(orderId: String, reason: String): Result<Unit> {
+        return try {
+            firestore.collection("orders").document(orderId).update(
+                mapOf(
+                    "status" to "cancelled",
+                    "cancellationReason" to reason
+                )
+            ).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

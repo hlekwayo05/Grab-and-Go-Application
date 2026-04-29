@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.grabngo2.data.model.Order
 import com.example.grabngo2.data.model.User
+import com.example.grabngo2.ui.components.StudentBottomBar
 import com.example.grabngo2.ui.theme.*
 import com.example.grabngo2.ui.viewmodel.StudentViewModel
 import kotlinx.coroutines.launch
@@ -41,6 +42,7 @@ fun TrackOrderScreen(
     onCancelSuccess: () -> Unit
 ) {
     val order by viewModel.getOrderById(orderId).collectAsStateWithLifecycle(initialValue = Order())
+    val cartCount by viewModel.cartItemCount.collectAsStateWithLifecycle()
     var showCancelDialog by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -70,7 +72,15 @@ fun TrackOrderScreen(
     }
 
     Scaffold(
-        bottomBar = { StudentBottomBar(currentScreen = "orders", themeChoice = themeChoice) },
+        bottomBar = {
+            StudentBottomBar(
+                currentScreen = "orders",
+                themeChoice = themeChoice,
+                cartCount = cartCount,
+                onHomeClick = { onBackClick() }, // Navigates back to wherever we came from
+                onOrdersClick = { /* Already here */ }
+            )
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(

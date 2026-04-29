@@ -53,6 +53,10 @@ class StudentViewModel(
     /** Active orders for current student */
     val activeOrders: StateFlow<List<Order>> = _activeOrders.asStateFlow()
 
+    private val _fullOrderHistory = MutableStateFlow<List<Order>>(emptyList())
+    /** All orders for current student, newest first */
+    val fullOrderHistory: StateFlow<List<Order>> = _fullOrderHistory.asStateFlow()
+
     private val _orderState = MutableStateFlow<OrderPlacementState>(OrderPlacementState.Idle)
     /** State of the current order placement operation */
     val orderState: StateFlow<OrderPlacementState> = _orderState.asStateFlow()
@@ -108,8 +112,17 @@ class StudentViewModel(
      */
     fun loadStudentData(studentId: String) {
         viewModelScope.launch {
-            orderRepository.getActiveOrders(studentId).collect { orders ->
-                _activeOrders.value = orders
+            // Collect active orders
+            launch {
+                orderRepository.getActiveOrders(studentId).collect { orders ->
+                    _activeOrders.value = orders
+                }
+            }
+            // Collect full history
+            launch {
+                orderRepository.getOrderHistory(studentId).collect { orders ->
+                    _fullOrderHistory.value = orders
+                }
             }
         }
     }

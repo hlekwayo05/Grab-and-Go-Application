@@ -15,6 +15,7 @@ import com.example.grabngo2.ui.screens.auth.ResetPasswordScreen
 import com.example.grabngo2.ui.screens.auth.SignUpScreen
 import com.example.grabngo2.ui.screens.student.CartScreen
 import com.example.grabngo2.ui.screens.student.MenuScreen
+import com.example.grabngo2.ui.screens.student.OrderHistoryScreen
 import com.example.grabngo2.ui.screens.student.StudentHomeScreen
 import com.example.grabngo2.ui.screens.student.TrackOrderScreen
 import com.example.grabngo2.ui.viewmodel.AuthViewModel
@@ -158,7 +159,20 @@ fun StudentNavGraph(
             )
         }
         composable(StudentScreen.OrderHistory.route) {
-            Text("Order History Screen Placeholder")
+            OrderHistoryScreen(
+                viewModel = studentViewModel,
+                themeChoice = themeChoice,
+                onHomeClick = { 
+                    navController.navigate(StudentScreen.Home.route) {
+                        popUpTo(StudentScreen.Home.route) { inclusive = true }
+                    }
+                },
+                onSearchClick = { /* TODO: Search */ },
+                onCartClick = { navController.navigate(StudentScreen.Cart.route) },
+                onTrackOrder = { orderId ->
+                    navController.navigate(StudentScreen.TrackOrder.route.replace("{orderId}", orderId))
+                }
+            )
         }
         composable(StudentScreen.Profile.route) {
             Text("User Profile Screen Placeholder")

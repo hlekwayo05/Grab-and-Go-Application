@@ -26,6 +26,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.grabngo2.data.model.Cafeteria
 import com.example.grabngo2.data.model.MenuItem
 import com.example.grabngo2.data.model.User
+import com.example.grabngo2.ui.components.StudentBottomBar
 import com.example.grabngo2.ui.theme.*
 import com.example.grabngo2.ui.viewmodel.StudentViewModel
 import java.util.*
@@ -78,6 +79,8 @@ fun StudentHomeScreen(
                 currentScreen = "home", 
                 themeChoice = themeChoice,
                 cartCount = cartItemCount,
+                onHomeClick = { /* Already here */ },
+                onSearchClick = { /* Navigate to search */ },
                 onCartClick = onCartClick,
                 onOrdersClick = onHistoryClick
             ) 
@@ -452,80 +455,5 @@ fun PopularMealCard(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun StudentBottomBar(
-    currentScreen: String, 
-    themeChoice: String = "dark",
-    cartCount: Int = 0,
-    onCartClick: () -> Unit = {},
-    onOrdersClick: () -> Unit = {}
-) {
-    NavigationBar(
-        containerColor = if (themeChoice == "dark") Color(0xFF1A110A) else LightSurface,
-        tonalElevation = 8.dp
-    ) {
-        NavigationBarItem(
-            selected = currentScreen == "home",
-            onClick = { },
-            icon = { Icon(Icons.Default.Home, contentDescription = null) },
-            label = { Text("Home") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = PrimaryOrange,
-                selectedTextColor = PrimaryOrange,
-                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
-                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
-                indicatorColor = Color.Transparent
-            )
-        )
-        NavigationBarItem(
-            selected = currentScreen == "search",
-            onClick = { },
-            icon = { Icon(Icons.Default.Search, contentDescription = null) },
-            label = { Text("Search") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = PrimaryOrange,
-                selectedTextColor = PrimaryOrange,
-                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
-                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
-                indicatorColor = Color.Transparent
-            )
-        )
-        NavigationBarItem(
-            selected = currentScreen == "cart",
-            onClick = onCartClick,
-            icon = { 
-                if (cartCount > 0) {
-                    BadgedBox(badge = { Badge(containerColor = PrimaryOrange) { Text(cartCount.toString(), color = TextWhite) } }) {
-                        Icon(Icons.Default.ShoppingCart, contentDescription = null)
-                    }
-                } else {
-                    Icon(Icons.Default.ShoppingCart, contentDescription = null)
-                }
-            },
-            label = { Text("Cart") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = PrimaryOrange,
-                selectedTextColor = PrimaryOrange,
-                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
-                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
-                indicatorColor = Color.Transparent
-            )
-        )
-        NavigationBarItem(
-            selected = currentScreen == "orders",
-            onClick = onOrdersClick,
-            icon = { Icon(Icons.Default.Assignment, contentDescription = null) },
-            label = { Text("Orders") },
-            colors = NavigationBarItemDefaults.colors(
-                selectedIconColor = PrimaryOrange,
-                selectedTextColor = PrimaryOrange,
-                unselectedIconColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
-                unselectedTextColor = if (themeChoice == "dark") TextGray else LightTextSecondary,
-                indicatorColor = Color.Transparent
-            )
-        )
     }
 }

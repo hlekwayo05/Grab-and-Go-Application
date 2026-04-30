@@ -58,7 +58,7 @@ async function seedData() {
         const uid = userRecord.uid;
 
         // 3. Write Firestore User Document
-        await db.collection('users').document(uid).set({
+        await db.collection('users').doc(uid).set({
             userId: uid,
             role: "staff",
             firstName: "Test",
@@ -96,7 +96,7 @@ async function seedData() {
         ];
 
         for (const caf of cafeterias) {
-            await db.collection('cafeterias').document(caf.cafeteriaId).set(caf);
+            await db.collection('cafeterias').doc(caf.cafeteriaId).set(caf);
             console.log(`✅ Seeded cafeteria: ${caf.cafeteriaId}`);
         }
 
@@ -146,7 +146,7 @@ async function seedData() {
         for (const item of menuItems) {
             // Using a predictable ID based on name for seeding
             const itemId = item.name.toLowerCase().replace(/ /g, '-');
-            await db.collection('menuItems').document(itemId).set({
+            await db.collection('menuItems').doc(itemId).set({
                 ...item,
                 itemId: itemId
             });

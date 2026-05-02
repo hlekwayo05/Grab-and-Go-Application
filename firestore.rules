@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * GrabNGo Firestore Security Rules.
+     * Enforces role-based access control.
+     * University of Mpumalanga 2026
+     */
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isStaff() {
+      return hasRole('staff');
+    }
+
+    /**
+     * COLLECTION: users/{userId}
+     * read: allowed if request.auth.uid == userId (own document) OR if caller's role == admin
+     * write: allowed if request.auth.uid == userId (own document, limited fields)
+     * Students cannot update: role, studentNumber, email, isActive
+     */
+    match /users/{userId} {
+      allow read: if request.auth.uid == userId || isAdmin();
+
+      allow update: if request.auth.uid == userId
+        && !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'studentNumber', 'email', 'isActive']));
+
+      // Document creation for staff/admin is only allowed via admin SDK (Cloud Function)
+      // Students can also be created via Cloud Function (registration flow)
+      allow create: if false;
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * COLLECTION: cafeterias/{cafeteriaId}
+     * read: allow all authenticated users
+     * write: only staff role where resource.data.cafeteriaId == caller's cafeteriaId OR admin role
+     */
+    match /cafeterias/{cafeteriaId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || (isStaff() && resource.data.cafeteriaId == getUserData().cafeteriaId);
+    }
+
+    /**
+     * COLLECTION: menuItems/{itemId}
+     * read: allow all authenticated users
+     * write: only staff role where resource.data.cafeteriaId == caller's cafeteriaId OR admin role
+     * NOTE: student writes always denied
+     */
+    match /menuItems/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin() || (isStaff() && resource.data.cafeteriaId == getUserData().cafeteriaId);
+    }
+
+    /**
+     * COLLECTION: orders/{orderId}
+     * read: allow if request.auth.uid == resource.data.studentId (own order)
+     *       OR staff role where resource.data.cafeteriaId matches caller's cafeteriaId
+     *       OR admin role
+     * create: allow if request.auth.uid == request.resource.data.studentId
+     *         AND resource is null (new document)
+     *         AND request.resource.data.status == 'pending'
+     * update: students can only update status to 'cancelled' if current status in [pending, confirmed]
+     */
+    match /orders/{orderId} {
+      allow read: if request.auth.uid == resource.data.studentId
+        || isAdmin()
+        || (isStaff() && resource.data.cafeteriaId == getUserData().cafeteriaId);
+
+      allow create: if request.auth.uid == request.resource.data.studentId
+        && request.resource.data.status == 'pending';
+
+      allow update: if (request.auth.uid == resource.data.studentId
+        && request.resource.data.status == 'cancelled'
+        && resource.data.status in ['pending', 'confirmed'])
+        || isAdmin();
+
+      // Staff status updates must go through Cloud Function
+      allow delete: if isAdmin();
+    }
+
+    /**
+     * COLLECTION: notifications/{notificationId}
+     * read: allow if request.auth.uid == resource.data.userId
+     * write: deny from client (written only by Cloud Functions via admin SDK)
+     */
+    match /notifications/{notificationId} {
+      allow read: if request.auth.uid == resource.data.userId;
+      allow write: if false;
+    }
+  }
+}
